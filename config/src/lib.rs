@@ -175,6 +175,7 @@ pub fn register_nacos() -> Result<()> {
  * 
  * 从 Nacos 获取配置
  */
+#[allow(unused)]
 fn service_config() {
 
 }

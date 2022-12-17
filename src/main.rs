@@ -1,5 +1,6 @@
+use derive_getters::Getters;
 use error_chain::error_chain;
-use sea_orm::{Database};
+use sea_orm::Database;
 use std::env;
 use tracing_subscriber::{filter, fmt, prelude::*, reload};
 
@@ -13,6 +14,12 @@ error_chain! {
         Io(std::io::Error);
         NacosError(nacos_sdk::api::error::Error);
     }
+}
+
+#[derive(Clone, Debug, Getters)]
+pub struct User {
+    id: u64,
+    name: String,
 }
 
 #[allow(unused)]

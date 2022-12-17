@@ -6,23 +6,26 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = "1.0.37"
-actix-web = "4.2.1"
-chrono = "0.4.22"
-error-chain = "0.12.4"
-lazy_static = "1.4.0"
-nacos-sdk = "0.2.2"
-schemars = "0.8.11"
-sea-orm = { version = "0.10.2", features = ["sqlx-mysql", "macros", "runtime-tokio-native-tls"] }
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.89"
-serde_yaml = "0.9.14"
-tracing = "0.1.37"
-tracing-subscriber = "0.3.16"
-anyhow = "1.0.66"
-entity = { path ="entity" }
-config = { path = "config" }
-common = { path = "common" }
+thiserror           = {workspace = true}
+actix-web           = {workspace = true}
+chrono              = {workspace = true}
+error-chain         = {workspace = true}
+lazy_static         = {workspace = true}
+nacos-sdk           = {workspace = true}
+schemars            = {workspace = true}
+sea-orm             = {workspace = true}
+serde               = {workspace = true}
+serde_json          = {workspace = true}
+serde_yaml          = {workspace = true}
+tracing             = {workspace = true}
+tracing-subscriber  = {workspace = true}
+anyhow              = {workspace = true}
+entity              = { path ="entity" }
+config              = { path = "config" }
+common              = { path = "common" }
+
+derive-getters      = {workspace = true}
+
 
 [workspace]
 members = [
@@ -51,5 +54,6 @@ serde_yaml = "0.9.14"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 anyhow = "1.0.66"
+derive-getters = "0.2.0"
 entity = { path ="entity" }
 

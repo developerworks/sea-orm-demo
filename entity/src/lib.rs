@@ -3,3 +3,5 @@
 pub mod prelude;
 
 pub mod trauma_patient;
+
+// pub use trauma_patient::*;
