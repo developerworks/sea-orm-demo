@@ -1,14 +1,12 @@
-mod config;
 use error_chain::error_chain;
-use sea_orm::DatabaseConnection;
+use sea_orm::{Database};
 use std::env;
 use tracing_subscriber::{filter, fmt, prelude::*, reload};
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use common::AppState;
 use config::GlobalConfig;
 use tracing::{self, debug, error, Level};
-
-use ::entity::trauma_patient;
 
 error_chain! {
     foreign_links {
@@ -20,11 +18,6 @@ error_chain! {
 #[allow(unused)]
 // 包名称, Cargo.toml 的 [package.name] 名字, cargo new 时的名字, 作为服务注册名称向 Nacos 注册
 const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
-
-#[derive(Debug, Clone)]
-struct AppState {
-    conn: DatabaseConnection,
-}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -67,6 +60,19 @@ async fn main() -> Result<()> {
     // 日志等级依据配置修改
     _ = reload_handle.modify(|f| *f = filter);
 
+    let db_url = format!(
+        "{}:{}@{}:{}/{}",
+        global_config.mysql.username,
+        global_config.mysql.password,
+        global_config.mysql.host,
+        global_config.mysql.port,
+        global_config.mysql.database
+    );
+
+    let conn = Database::connect(&db_url).await.unwrap();
+
+    let state = AppState { conn };
+
     // 注册自身
     _ = config::register_nacos();
 
@@ -83,8 +89,9 @@ async fn main() -> Result<()> {
 
     // TOTO:: 获取数据库连接, 注入全局状态
 
-    let server = HttpServer::new(|| {
+    let server = HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(state.clone()))
             .service(hello)
             .service(echo)
             .route("/hey", web::get().to(manual_hello))

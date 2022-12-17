@@ -168,3 +168,13 @@ pub fn register_nacos() -> Result<()> {
 
     Ok(())
 }
+
+
+/**
+ * 服务配置
+ * 
+ * 从 Nacos 获取配置
+ */
+fn service_config() {
+
+}
