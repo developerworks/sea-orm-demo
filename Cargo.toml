@@ -6,4 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sea-orm = { version = "0.7.1", features = ["sqlx-mysql", "runtime-actix-rustls", "macros"] }
+actix-web = "4.2.1"
+chrono = "0.4.22"
+error-chain = "0.12.4"
+lazy_static = "1.4.0"
+nacos-sdk = "0.2.2"
+schemars = "0.8.11"
+sea-orm = { version = "0.10.2", features = ["sqlx-mysql", "macros", "runtime-tokio-native-tls"] }
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.89"
+serde_yaml = "0.9.14"
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
+
+[workspace]
+members = [
+    # "migration"
+]

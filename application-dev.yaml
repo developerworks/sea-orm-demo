@@ -1,0 +1,37 @@
+mysql:
+  host: localhost
+  port: 3306
+  username: root
+  password: root
+  database: trauma
+nacos:
+  server-addr: 127.0.0.1:8848
+  namespace: public
+  group: DEFAULT_GROUP
+  data-id: application-{}.yaml
+server:
+  host: 127.0.0.1
+  port: 7070
+  #   enum LevelInner {
+  #     /// The "trace" level.
+  #     ///
+  #     /// Designates very low priority, often extremely verbose, information.
+  #     Trace = 0,
+  #     /// The "debug" level.
+  #     ///
+  #     /// Designates lower priority information.
+  #     Debug = 1,
+  #     /// The "info" level.
+  #     ///
+  #     /// Designates useful information.
+  #     Info = 2,
+  #     /// The "warn" level.
+  #     ///
+  #     /// Designates hazardous situations.
+  #     Warn = 3,
+  #     /// The "error" level.
+  #     ///
+  #     /// Designates very serious errors.
+  #     Error = 4,
+  # }
+  log-level: 2
