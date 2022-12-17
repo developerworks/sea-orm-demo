@@ -1,11 +1,14 @@
 mod config;
 use error_chain::error_chain;
+use sea_orm::DatabaseConnection;
 use std::env;
 use tracing_subscriber::{filter, fmt, prelude::*, reload};
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use config::GlobalConfig;
 use tracing::{self, debug, error, Level};
+
+use ::entity::trauma_patient;
 
 error_chain! {
     foreign_links {
@@ -17,6 +20,11 @@ error_chain! {
 #[allow(unused)]
 // 包名称, Cargo.toml 的 [package.name] 名字, cargo new 时的名字, 作为服务注册名称向 Nacos 注册
 const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
+
+#[derive(Debug, Clone)]
+struct AppState {
+    conn: DatabaseConnection,
+}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -72,6 +80,9 @@ async fn main() -> Result<()> {
         global_config.server.port,
         filter
     );
+
+    // TOTO:: 获取数据库连接, 注入全局状态
+
     let server = HttpServer::new(|| {
         App::new()
             .service(hello)
