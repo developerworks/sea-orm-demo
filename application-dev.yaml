@@ -6,7 +6,7 @@ mysql:
   database: trauma
 nacos:
   server-addr: 127.0.0.1:8848
-  namespace: public
+  namespace: ""
   group: DEFAULT_GROUP
   data-id: application-{}.yaml
 server:
