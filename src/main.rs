@@ -1,10 +1,11 @@
 use derive_getters::Getters;
 use error_chain::error_chain;
+use repository::mysql::patient_repository_impl::PatientRepository;
 use sea_orm::Database;
 use std::env;
 use tracing_subscriber::{filter, fmt, prelude::*, reload};
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpServer};
 use common::AppState;
 use config::GlobalConfig;
 use tracing::{self, debug, error, Level};
@@ -15,7 +16,6 @@ error_chain! {
         NacosError(nacos_sdk::api::error::Error);
     }
 }
-
 #[derive(Clone, Debug, Getters)]
 pub struct User {
     id: u64,
@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
     _ = reload_handle.modify(|f| *f = filter);
 
     let db_url = format!(
-        "{}:{}@{}:{}/{}",
+        "mysql://{}:{}@{}:{}/{}",
         global_config.mysql.username,
         global_config.mysql.password,
         global_config.mysql.host,
@@ -78,7 +78,13 @@ async fn main() -> Result<()> {
 
     let conn = Database::connect(&db_url).await.unwrap();
 
-    let state = AppState { conn };
+    let patient_repository = PatientRepository {
+        db: conn.clone()
+    };
+
+    let state = AppState { 
+        patient_repository
+    };
 
     // 注册自身
     _ = config::register_nacos();
@@ -88,7 +94,7 @@ async fn main() -> Result<()> {
     debug_configuration(&global_config);
 
     tracing::info!(
-        "Server is running on {}:{}, log level: {}",
+        "Server is running on http://{}:{}, log level: {}",
         global_config.server.host,
         global_config.server.port,
         filter
@@ -99,10 +105,10 @@ async fn main() -> Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(state.clone()))
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
+            .configure(api::init)
     })
+    // 线程数
+    .workers(global_config.actix.workers)
     .bind((global_config.server.host, global_config.server.port))?
     .run();
 
@@ -158,19 +164,4 @@ fn debug_configuration(conf: &GlobalConfig) {
     debug!("[Configuration] nacos namespace   : {}", conf.nacos.namespace);
     debug!("[Configuration] nacos group       : {}", conf.nacos.group);
     debug!("[Configuration] nacos data_id     : {}", conf.nacos.data_id);
-}
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
-
-async fn manual_hello() -> impl Responder {
-    tracing::info!("run manual_hello on /hey");
-    HttpResponse::Ok().body("Hey there!")
 }
