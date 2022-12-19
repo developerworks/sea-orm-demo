@@ -6,7 +6,7 @@ use schemars::schema::RootSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{error, info};
 
-pub const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
+pub const SERVICE_NAME: &str = env!("CARGO_PKG_NAME").to_string();
 
 error_chain! {
     foreign_links {
@@ -47,6 +47,11 @@ pub struct Server {
     pub port: u16,
     pub log_level: u8,
 }
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub struct Actix {
+    pub workers: usize
+}
 // 用来接收application-dev.yml解析结果
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
@@ -56,6 +61,8 @@ pub struct GlobalConfig {
     pub nacos: Nacos,
     // 服务器配置
     pub server: Server,
+    // Actix 配置
+    pub actix: Actix,
 }
 
 // 加载指定配置文件
@@ -137,9 +144,40 @@ pub fn register_nacos() -> Result<()> {
         .namespace(global_config.nacos.namespace)
         .app_name(PACKAGE_NAME);
 
-    
-    let naming_service = NamingServiceBuilder::new(client_props).build()?;
+    ////////////////////////        
+    // Config Service
+    ////////////////////////
+    let mut config_service = ConfigServiceBuilder::new(client_props.clone()).build()?;
+    let config_resp = config_service.get_config("todo-data-id".to_string(), "LOVE".to_string());
+    match config_resp {
+        Ok(config_resp) => tracing::info!("get the config {}", config_resp),
+        Err(err) => tracing::error!("get the config {:?}", err),
+    }
 
+    let _listen = config_service.add_listener(
+        "todo-data-id".to_string(),
+        "LOVE".to_string(),
+        std::sync::Arc::new(SimpleConfigChangeListener {}),
+    );
+    match _listen {
+        Ok(_) => tracing::info!("listening the config success"),
+        Err(err) => tracing::error!("listen config error {:?}", err),
+    }
+
+    ////////////////////////
+    // Service Discovery
+    ////////////////////////
+    let naming_service = NamingServiceBuilder::new(client_props).build()?;
+    let listener = std::sync::Arc::new(SimpleInstanceChangeListener);
+    
+    // Subscribe
+    let _subscribe_ret = naming_service.subscribe(
+        SERVICE_NAME,
+        Some(constants::DEFAULT_GROUP.to_string()),
+        Vec::default(),
+        listener,
+    );
+    // Register instance
     let service_instance1 = ServiceInstance {
         ip: "127.0.0.1".to_string(),
         port: 9092,
@@ -148,15 +186,16 @@ pub fn register_nacos() -> Result<()> {
     };
     tracing::info!("Register service instance {}:{}", global_config.server.host, global_config.server.port);
     let _register_instance_ret = naming_service.batch_register_instance(
-        PACKAGE_NAME.to_string(),
+        SERVICE_NAME,
         Some(constants::DEFAULT_GROUP.to_string()),
         vec![service_instance1],
     );
-    // sleep(Duration::from_millis(111)).await;
 
+
+    // Get instances
     tracing::debug!("Get all instances");
     let instances_ret = naming_service.get_all_instances(
-        PACKAGE_NAME.to_string(),
+        SERVICE_NAME,
         Some(constants::DEFAULT_GROUP.to_string()),
         Vec::default(),
         false,
@@ -178,4 +217,19 @@ pub fn register_nacos() -> Result<()> {
 #[allow(unused)]
 fn service_config() {
 
+}
+
+struct SimpleConfigChangeListener;
+
+impl ConfigChangeListener for SimpleConfigChangeListener {
+    fn notify(&self, config_resp: ConfigResponse) {
+        tracing::info!("listen the config={}", config_resp);
+    }
+}
+
+pub struct SimpleInstanceChangeListener;
+impl NamingEventListener for SimpleInstanceChangeListener {
+    fn event(&self, event: std::sync::Arc<NamingChangeEvent>) {
+        tracing::info!("subscriber notify: {:?}", event);
+    }
 }
