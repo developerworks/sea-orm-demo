@@ -6,5 +6,5 @@ pub mod patient_controller;
  */
 #[allow(unused)]
 pub fn init(cfg: &mut web::ServiceConfig) {
-    cfg.service(patient_controller::view);
+    cfg.service(patient_controller::api_routes());
 }
