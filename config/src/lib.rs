@@ -1,12 +1,20 @@
 use std::env;
 
 use error_chain::error_chain;
-use nacos_sdk::api::{naming::{NamingServiceBuilder, ServiceInstance, NamingService}, props::ClientProps, constants};
+use nacos_sdk::api::{
+    config::{ConfigChangeListener, ConfigResponse, ConfigService, ConfigServiceBuilder},
+    constants,
+    naming::{
+        NamingChangeEvent, NamingEventListener, NamingService, NamingServiceBuilder,
+        ServiceInstance,
+    },
+    props::ClientProps,
+};
 use schemars::schema::RootSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{error, info};
 
-pub const SERVICE_NAME: &str = env!("CARGO_PKG_NAME").to_string();
+pub const SERVICE_NAME: &str = &env!("CARGO_PKG_NAME");
 
 error_chain! {
     foreign_links {
@@ -50,7 +58,7 @@ pub struct Server {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct Actix {
-    pub workers: usize
+    pub workers: usize,
 }
 // 用来接收application-dev.yml解析结果
 #[derive(Serialize, Deserialize, Debug)]
@@ -142,13 +150,13 @@ pub fn register_nacos() -> Result<()> {
         .server_addr(global_config.nacos.server_addr)
         // Attention! "public" is "", it is recommended to customize the namespace with clear meaning.
         .namespace(global_config.nacos.namespace)
-        .app_name(PACKAGE_NAME);
+        .app_name(SERVICE_NAME);
 
-    ////////////////////////        
+    ////////////////////////
     // Config Service
     ////////////////////////
     let mut config_service = ConfigServiceBuilder::new(client_props.clone()).build()?;
-    let config_resp = config_service.get_config("todo-data-id".to_string(), "LOVE".to_string());
+    let config_resp = config_service.get_config(SERVICE_NAME.to_string(), "LOVE".to_string());
     match config_resp {
         Ok(config_resp) => tracing::info!("get the config {}", config_resp),
         Err(err) => tracing::error!("get the config {:?}", err),
@@ -169,10 +177,10 @@ pub fn register_nacos() -> Result<()> {
     ////////////////////////
     let naming_service = NamingServiceBuilder::new(client_props).build()?;
     let listener = std::sync::Arc::new(SimpleInstanceChangeListener);
-    
+
     // Subscribe
     let _subscribe_ret = naming_service.subscribe(
-        SERVICE_NAME,
+        SERVICE_NAME.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         Vec::default(),
         listener,
@@ -184,18 +192,21 @@ pub fn register_nacos() -> Result<()> {
         weight: 1.0,
         ..Default::default()
     };
-    tracing::info!("Register service instance {}:{}", global_config.server.host, global_config.server.port);
+    tracing::info!(
+        "Register service instance {}:{}",
+        global_config.server.host,
+        global_config.server.port
+    );
     let _register_instance_ret = naming_service.batch_register_instance(
-        SERVICE_NAME,
+        SERVICE_NAME.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         vec![service_instance1],
     );
 
-
     // Get instances
     tracing::debug!("Get all instances");
     let instances_ret = naming_service.get_all_instances(
-        SERVICE_NAME,
+        SERVICE_NAME.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         Vec::default(),
         false,
@@ -208,16 +219,13 @@ pub fn register_nacos() -> Result<()> {
     Ok(())
 }
 
-
 /**
  * 服务配置
- * 
+ *
  * 从 Nacos 获取配置
  */
 #[allow(unused)]
-fn service_config() {
-
-}
+fn service_config() {}
 
 struct SimpleConfigChangeListener;
 
