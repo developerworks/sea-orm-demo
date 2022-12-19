@@ -20,11 +20,16 @@ serde_yaml          = {workspace = true}
 tracing             = {workspace = true}
 tracing-subscriber  = {workspace = true}
 anyhow              = {workspace = true}
-entity              = { path ="entity" }
-config              = { path = "config" }
-common              = { path = "common" }
-
 derive-getters      = {workspace = true}
+
+
+entity              = {workspace = true}
+config              = {workspace = true}
+common              = {workspace = true}
+api                 = {workspace = true}
+repository          = {workspace = true}
+lombok              = {workspace = true}
+
 
 
 [workspace]
@@ -55,5 +60,10 @@ tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 anyhow = "1.0.66"
 derive-getters = "0.2.0"
-entity = { path ="entity" }
+lombok = "0.3.3"
+entity              = { path = "entity" }
+config              = { path = "config" }
+common              = { path = "common" }
+api                 = { path = "api" }
+repository          = { path = "repository" }
 

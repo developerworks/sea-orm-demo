@@ -7,4 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
+derive-new = "0.5.9"
 entity = { path = "../entity" }
+sea-orm = { workspace = true }
+async-trait = "0.1.60"

@@ -273,7 +273,10 @@ version = "0.0.1"
 dependencies = [
  "actix-web",
  "common",
+ "entity",
+ "repository",
  "sea-orm",
+ "tracing",
 ]
 
 [[package]]
@@ -305,9 +308,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.53"
+version = "0.1.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed6aa3524a2dfcf9fe180c51eae2b58738348d819517ceadf95789c51fff7600"
+checksum = "677d1d8ab452a3936018a687b20e6f7cf5363d713b732b8884001317b0e48aa3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -555,7 +558,11 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "lombok",
+ "repository",
  "sea-orm",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -778,6 +785,17 @@ name = "derive-getters"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c5905670fd9c320154f3a4a01c9e609733cd7b753f3c58777ab7d5ce26686b3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "derive-new"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3418329ca0ad70234b9735dc4ceed10af4df60eff9c8e7b06cb5e520d92c3535"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1438,6 +1456,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lombok"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5187642d1287622bffecdec7f70f0a961dce14d03b9173374e1f5f615b798dea"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1975,7 +2004,10 @@ name = "repository"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "derive-new",
  "entity",
+ "sea-orm",
 ]
 
 [[package]]
@@ -2169,6 +2201,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "anyhow",
+ "api",
  "chrono",
  "common",
  "config",
@@ -2176,7 +2209,9 @@ dependencies = [
  "entity",
  "error-chain",
  "lazy_static",
+ "lombok",
  "nacos-sdk",
+ "repository",
  "schemars",
  "sea-orm",
  "serde",

@@ -35,3 +35,5 @@ server:
   #     Error = 4,
   # }
   log-level: 2
+actix:
+  workers: 10
