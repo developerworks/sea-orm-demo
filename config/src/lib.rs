@@ -14,7 +14,7 @@ use schemars::schema::RootSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{error, info};
 
-pub const SERVICE_NAME: &str = &env!("CARGO_PKG_NAME");
+pub const SERVICE_NAME: &str = env!("CARGO_PKG_NAME");
 
 error_chain! {
     foreign_links {
@@ -52,7 +52,7 @@ pub struct Nacos {
 #[serde(rename_all = "kebab-case")]
 pub struct Server {
     pub host: String,
-    pub port: u16,
+    pub port: i32,
     pub log_level: u8,
 }
 #[derive(Serialize, Deserialize, Debug)]
@@ -153,15 +153,17 @@ pub fn register_nacos() -> Result<()> {
         .app_name(SERVICE_NAME);
 
     ////////////////////////
-    // Config Service
+    // Service Configure
     ////////////////////////
+     
+    // 1. Create service configure instance
     let mut config_service = ConfigServiceBuilder::new(client_props.clone()).build()?;
     let config_resp = config_service.get_config(SERVICE_NAME.to_string(), "LOVE".to_string());
     match config_resp {
         Ok(config_resp) => tracing::info!("get the config {}", config_resp),
         Err(err) => tracing::error!("get the config {:?}", err),
     }
-
+    // 2. Add configure change listener
     let _listen = config_service.add_listener(
         "todo-data-id".to_string(),
         "LOVE".to_string(),
@@ -175,20 +177,21 @@ pub fn register_nacos() -> Result<()> {
     ////////////////////////
     // Service Discovery
     ////////////////////////
+    // 1. Create naming service
     let naming_service = NamingServiceBuilder::new(client_props).build()?;
     let listener = std::sync::Arc::new(SimpleInstanceChangeListener);
 
-    // Subscribe
+    // 2. Subscribe
     let _subscribe_ret = naming_service.subscribe(
         SERVICE_NAME.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         Vec::default(),
         listener,
     );
-    // Register instance
+    // 3. Register instance
     let service_instance1 = ServiceInstance {
-        ip: "127.0.0.1".to_string(),
-        port: 9092,
+        ip: global_config.server.host.clone(),
+        port: global_config.server.port,
         weight: 1.0,
         ..Default::default()
     };
@@ -203,7 +206,7 @@ pub fn register_nacos() -> Result<()> {
         vec![service_instance1],
     );
 
-    // Get instances
+    // 4. Get instances
     tracing::debug!("Get all instances");
     let instances_ret = naming_service.get_all_instances(
         SERVICE_NAME.to_string(),

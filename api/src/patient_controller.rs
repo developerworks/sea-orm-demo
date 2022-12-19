@@ -22,6 +22,7 @@ async fn view(data: web::Data<AppState>, id: web::Path<u64>) -> Result<impl Resp
     }
 }
 
+#[allow(unused)]
 #[post("/")]
 async fn create(data: web::Data<AppState>, patient: web::Json<patient::Model>) -> Result<impl Responder> {
     Ok(web::Json(patient))
