@@ -10,6 +10,8 @@ use common::AppState;
 use config::GlobalConfig;
 use tracing::{self, debug, error, Level};
 
+pub const SERVICE_NAME: &str = env!("CARGO_PKG_NAME");
+
 error_chain! {
     foreign_links {
         Io(std::io::Error);
@@ -87,7 +89,7 @@ async fn main() -> Result<()> {
     };
 
     // 注册自身
-    _ = config::register_nacos();
+    _ = config::register_nacos(SERVICE_NAME);
 
     // 调试环境变量,需设置日志等级为 DEBUG
     debug_envs();

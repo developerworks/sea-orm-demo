@@ -14,8 +14,6 @@ use schemars::schema::RootSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{error, info};
 
-pub const SERVICE_NAME: &str = env!("CARGO_PKG_NAME");
-
 error_chain! {
     foreign_links {
         Io(std::io::Error);
@@ -52,7 +50,7 @@ pub struct Nacos {
 #[serde(rename_all = "kebab-case")]
 pub struct Server {
     pub host: String,
-    pub port: i32,
+    pub port: u16,
     pub log_level: u8,
 }
 #[derive(Serialize, Deserialize, Debug)]
@@ -131,7 +129,7 @@ pub fn load_global_config() -> Option<GlobalConfig> {
     }
 }
 
-pub fn register_nacos() -> Result<()> {
+pub fn register_nacos(service_name: &str) -> Result<()> {
     let env_config = load_env_config().unwrap();
 
     // 加载配置
@@ -150,15 +148,15 @@ pub fn register_nacos() -> Result<()> {
         .server_addr(global_config.nacos.server_addr)
         // Attention! "public" is "", it is recommended to customize the namespace with clear meaning.
         .namespace(global_config.nacos.namespace)
-        .app_name(SERVICE_NAME);
+        .app_name(service_name);
 
     ////////////////////////
     // Service Configure
     ////////////////////////
-     
+
     // 1. Create service configure instance
     let mut config_service = ConfigServiceBuilder::new(client_props.clone()).build()?;
-    let config_resp = config_service.get_config(SERVICE_NAME.to_string(), "LOVE".to_string());
+    let config_resp = config_service.get_config(service_name.to_string(), "LOVE".to_string());
     match config_resp {
         Ok(config_resp) => tracing::info!("get the config {}", config_resp),
         Err(err) => tracing::error!("get the config {:?}", err),
@@ -183,7 +181,7 @@ pub fn register_nacos() -> Result<()> {
 
     // 2. Subscribe
     let _subscribe_ret = naming_service.subscribe(
-        SERVICE_NAME.to_string(),
+        service_name.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         Vec::default(),
         listener,
@@ -191,7 +189,7 @@ pub fn register_nacos() -> Result<()> {
     // 3. Register instance
     let service_instance1 = ServiceInstance {
         ip: global_config.server.host.clone(),
-        port: global_config.server.port,
+        port: global_config.server.port as i32,
         weight: 1.0,
         ..Default::default()
     };
@@ -201,7 +199,7 @@ pub fn register_nacos() -> Result<()> {
         global_config.server.port
     );
     let _register_instance_ret = naming_service.batch_register_instance(
-        SERVICE_NAME.to_string(),
+        service_name.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         vec![service_instance1],
     );
@@ -209,7 +207,7 @@ pub fn register_nacos() -> Result<()> {
     // 4. Get instances
     tracing::debug!("Get all instances");
     let instances_ret = naming_service.get_all_instances(
-        SERVICE_NAME.to_string(),
+        service_name.to_string(),
         Some(constants::DEFAULT_GROUP.to_string()),
         Vec::default(),
         false,
