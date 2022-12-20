@@ -636,6 +636,7 @@ name = "config"
 version = "0.1.0"
 dependencies = [
  "error-chain",
+ "lombok",
  "nacos-sdk",
  "schemars",
  "serde",

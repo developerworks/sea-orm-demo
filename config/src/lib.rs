@@ -13,6 +13,7 @@ use nacos_sdk::api::{
 use schemars::schema::RootSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{error, info};
+use lombok::{Setter};
 
 error_chain! {
     foreign_links {
@@ -27,10 +28,12 @@ pub struct Profiles {
 }
 // 用来接收application.yml解析结果
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct EnvConfig {
     pub profiles: Profiles,
 }
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct Mysql {
     pub host: String,
     pub port: u32,
@@ -46,12 +49,13 @@ pub struct Nacos {
     pub group: String,
     pub data_id: String,
 }
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Setter)]
 #[serde(rename_all = "kebab-case")]
 pub struct Server {
     pub host: String,
     pub port: u16,
     pub log_level: u8,
+    pub name: String,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
