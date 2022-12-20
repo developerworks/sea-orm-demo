@@ -89,8 +89,7 @@ async fn main() -> Result<()> {
     };
 
     // 注册自身
-    let service_name = SERVICE_NAME.to_string() + ".yaml";
-    _ = config::register_nacos(service_name.as_str());
+    _ = config::register_nacos(SERVICE_NAME);
 
     // 调试环境变量,需设置日志等级为 DEBUG
     debug_envs();

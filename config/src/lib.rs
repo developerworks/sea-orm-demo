@@ -156,14 +156,17 @@ pub fn register_nacos(service_name: &str) -> Result<()> {
 
     // 1. Create service configure instance
     let mut config_service = ConfigServiceBuilder::new(client_props.clone()).build()?;
-    let config_resp = config_service.get_config(service_name.to_string(), global_config.nacos.group.clone());
+    let config_resp = config_service.get_config(
+        service_name.to_string() + ".yaml",
+        global_config.nacos.group.clone(),
+    );
     match config_resp {
         Ok(config_resp) => tracing::info!("get the config {}", config_resp),
         Err(err) => tracing::error!("get the config {:?}", err),
     }
     // 2. Add configure change listener
     let _listen = config_service.add_listener(
-        service_name.to_string(),
+        service_name.to_string() + ".yaml",
         global_config.nacos.group.clone(),
         std::sync::Arc::new(SimpleConfigChangeListener {}),
     );
