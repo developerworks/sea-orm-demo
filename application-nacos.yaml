@@ -1,0 +1,14 @@
+# Configuraitons from nacos
+server:
+  name: sea-orm-demo
+  port: 8080
+  host: 127.0.0.1
+  log-level: 2
+mysql:
+  host: localhost
+  port: 3306
+  username: root
+  password: root
+  database: trauma
+actix:
+  workers: 10

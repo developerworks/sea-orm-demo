@@ -1,6 +1,7 @@
 use std::env;
 
 use error_chain::error_chain;
+use lombok::Setter;
 use nacos_sdk::api::{
     config::{ConfigChangeListener, ConfigResponse, ConfigService, ConfigServiceBuilder},
     constants,
@@ -13,7 +14,6 @@ use nacos_sdk::api::{
 use schemars::schema::RootSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{error, info};
-use lombok::{Setter};
 
 error_chain! {
     foreign_links {
@@ -160,6 +160,7 @@ pub fn register_nacos(service_name: &str) -> Result<()> {
 
     // 1. Create service configure instance
     let mut config_service = ConfigServiceBuilder::new(client_props.clone()).build()?;
+
     let config_resp = config_service.get_config(
         service_name.to_string() + ".yaml",
         global_config.nacos.group.clone(),
@@ -239,13 +240,13 @@ struct SimpleConfigChangeListener;
 
 impl ConfigChangeListener for SimpleConfigChangeListener {
     fn notify(&self, config_resp: ConfigResponse) {
-        tracing::info!("listen the config={}", config_resp);
+        tracing::info!("Configuration changed: {}", config_resp);
     }
 }
 
 pub struct SimpleInstanceChangeListener;
 impl NamingEventListener for SimpleInstanceChangeListener {
     fn event(&self, event: std::sync::Arc<NamingChangeEvent>) {
-        tracing::info!("subscriber notify: {:?}", event);
+        tracing::info!("Heath check: {:?}", event);
     }
 }

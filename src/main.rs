@@ -1,17 +1,14 @@
+use actix_web::{web, App, HttpServer};
+use common::AppState;
+use config::GlobalConfig;
 use derive_getters::Getters;
 use error_chain::error_chain;
 use repository::mysql::patient_repository_impl::PatientRepository;
 use sea_orm::Database;
 use std::env;
-use tracing_subscriber::{filter, fmt, prelude::*, reload};
-
-use actix_web::{web, App, HttpServer};
-use common::AppState;
-use config::GlobalConfig;
 use tracing::{self, debug, error, Level};
-
+use tracing_subscriber::{filter, fmt, prelude::*, reload};
 pub const SERVICE_NAME: &str = env!("CARGO_PKG_NAME");
-
 error_chain! {
     foreign_links {
         Io(std::io::Error);
@@ -31,20 +28,16 @@ const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
 #[actix_web::main]
 async fn main() -> Result<()> {
     // 日志订阅
-
     let filter = filter::LevelFilter::DEBUG;
     let (filter, reload_handle) = reload::Layer::new(filter);
     tracing_subscriber::registry()
         .with(filter)
         .with(fmt::Layer::default())
         .init();
-
     // tracing_subscriber::fmt()
     //     .with_max_level(tracing::Level::DEBUG)
     //     .init();
-
     let env_config = config::load_env_config().unwrap();
-
     // 加载配置
     let global_config = match config::load_global_config() {
         None => {
@@ -57,7 +50,6 @@ async fn main() -> Result<()> {
             conf
         }
     };
-
     let filter = match global_config.server.log_level {
         0 => filter::LevelFilter::from_level(Level::TRACE),
         1 => filter::LevelFilter::from_level(Level::DEBUG),
@@ -77,47 +69,33 @@ async fn main() -> Result<()> {
         global_config.mysql.port,
         global_config.mysql.database
     );
-
     let conn = Database::connect(&db_url).await.unwrap();
-
-    let patient_repository = PatientRepository {
-        db: conn.clone()
-    };
-
-    let state = AppState { 
-        patient_repository
-    };
-
+    let patient_repository = PatientRepository { db: conn.clone() };
+    let state = AppState { patient_repository };
     // 注册自身
     _ = config::register_nacos(SERVICE_NAME);
-
     // 调试环境变量,需设置日志等级为 DEBUG
     debug_envs();
     debug_configuration(&global_config);
-
     tracing::info!(
         "Server is running on http://{}:{}, log level: {}",
         global_config.server.host,
         global_config.server.port,
         filter
     );
-
     // TOTO:: 获取数据库连接, 注入全局状态
-
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(state.clone()))
             .configure(api::init)
     })
+    .shutdown_timeout(30)
     // 线程数
     .workers(global_config.actix.workers)
     .bind((global_config.server.host, global_config.server.port))?
     .run();
-
     _ = server.await;
-
     // let res = test().await;
-
     // let m = match res {
     //     Some(created) => created,
     //     None => activity::Model {
@@ -126,23 +104,19 @@ async fn main() -> Result<()> {
     //     }
     // };
     // let datetime = format_datetime(m.created_at);
-
     // println!("now: {}", datetime);
-
     Ok(())
 }
 
 // fn format_datetime(dt: DateTimeUtc) -> String {
 //     format!("{}", dt.with_timezone(&chrono::Local).format("%Y-%m-%d %T"))
 // }
-
 // async fn test() -> Option<activity::Model> {
 //     let db: DatabaseConnection = Database::connect("mysql://root:root@localhost/trauma")
 //         .await
 //         .unwrap();
 //     Activity::find_by_id(2).one(&db).await.unwrap()
 // }
-
 fn debug_envs() {
     let cargo_manifest_dir: String = env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| {
         error!("Can not get env:  CARGO_MANIFEST_DIR");
