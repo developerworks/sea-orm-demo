@@ -15,21 +15,16 @@ async fn view(state: web::Data<AppState>, id: web::Path<u64>) -> Result<impl Res
     // .expect("could not find patient");
     match result {
         Ok(p) => match p {
-            Some(patient) => {
-                Ok(HttpResponse::Ok().json(ApiResult::new(0, "", Some(web::Json(patient)))))
-            }
-            None => Ok(HttpResponse::Ok().json(ApiResult::<patient::Model>::new(
-                0,
-                "Can not find patient",
-                None,
-            ))),
+            Some(patient) => Ok(HttpResponse::Ok().json(ApiResult::ok(web::Json(patient)))),
+            None => Ok(
+                HttpResponse::Ok().json(ApiResult::<patient::Model>::err(u16::MAX, "Not found"))
+            ),
         },
         Err(e) => {
             error!("Database error {}", e);
-            Ok(HttpResponse::Ok().json(ApiResult::<patient::Model>::new(
-                0,
+            Ok(HttpResponse::Ok().json(ApiResult::<patient::Model>::err(
+                u16::MAX,
                 "Database errors occured",
-                None,
             )))
         }
     }

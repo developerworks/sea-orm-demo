@@ -1,4 +1,4 @@
-use lombok::{AllArgsConstructor, Builder};
+use lombok::AllArgsConstructor;
 use repository::mysql::patient_repository_impl::PatientRepository;
 use serde::Serialize;
 
